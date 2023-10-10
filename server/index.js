@@ -24,16 +24,23 @@ io.on("connection", (socket) => {
   //add user into the room
   socket.on("join_room", (data) => {
     const { username, room } = data;
-    console.log(`User with ID: ${socket.id} joined room: ${data}`);
+    console.log(
+      `User with ID: ${socket.id} joined room: ${data}, username: ${username}})`
+    );
     socket.join(room);
 
     //created time
-    let __createdtime__ = Date.now;
+    let __createdtime__ = Date.now();
+    console.log("created time: " , __createdtime__);
 
     //send message to all users currently in the room, apart from the sender
     socket
       .to(room)
-      .emit("receive_message", { message: `${username}`, __createdtime__ });
+      .emit("receive_message", {
+        message: `${username} has joined the room. `,
+        username: CHAT_BOT,
+        __createdtime__,
+      });
 
     //send message to the sender
     socket.emit("receive_message", {
@@ -45,6 +52,7 @@ io.on("connection", (socket) => {
     //Save new user to the room
     chatRoom = room;
     allUsers.push({ id: socket.id, username, room });
+    let chatRoomUsers = [];
     chatRoomUsers = allUsers.filter((user) => user.room === room);
     socket.to(room).emit("chatroom_users", chatRoomUsers);
     socket.emit("chatroom_users", chatRoomUsers);
