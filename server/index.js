@@ -8,6 +8,7 @@ const { Server } = require("socket.io");
 app.use(cors());
 const server = http.createServer(app);
 
+const leaveRoom = require("./utils/leave-room");
 const harperSaveMessage = require("./services/harper-save-message");
 const harperGetMessages = require("./services/harper-get-messages");
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,7 +75,24 @@ io.on("connection", (socket) => {
       .then((response) => console.log(response))
       .catch((err) => console.log(err));
   });
+
+  //When user leaves
+  socket.on("leave_room", (data) => {
+    const { username, room } = data;
+    socket.leave(room);
+    const __createdtime__ = Date.now();
+    //Remove user from memory
+    allUsers = leaveRoom(socket.id, allUsers);
+    socket.to(room).emit("chatroom_users", allUsers);
+    socket.to(room).emit("receive_message", {
+      username: CHAT_BOT,
+      message: `${username} has left the chat.`,
+      __createdtime__,
+    });
+    console.log(`User ${username}} left room: ${room}`);
+  });
 });
+
 ///////////////////////////////////////////////////////////////////////////////
 //listen on port 4000
 server.listen(4000, () => {
