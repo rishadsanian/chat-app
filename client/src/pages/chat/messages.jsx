@@ -1,13 +1,13 @@
 import styles from "./styles.module.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const Messages = ({ socket }) => {
   const [messagesReceived, setMessagesReceived] = useState([]);
-  console.log(messagesReceived);
-  //runs whenever a socket event is receiverd from server
+  const messagesEndRef = useRef(null);
+
+  //runs whenever a socket event is received from server
   useEffect(() => {
     socket.on("receive_message", (data) => {
-      console.log(data);
       setMessagesReceived((state) => [
         ...state,
         {
@@ -17,34 +17,41 @@ const Messages = ({ socket }) => {
         },
       ]);
     });
-    //remove event listener on commponent unmount
+
+    //remove event listener on component unmount
     return () => {
       socket.off("receive_message");
     };
   }, [socket]);
 
+  //scroll to bottom of messages container
+  useEffect(() => {
+    messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [messagesReceived]);
+
   function formatDateFromTimestamp(timestamp) {
-    console.log(timestamp);
     const date = new Date(parseInt(timestamp));
-    console.log(date.toLocaleString());
     return date.toLocaleString();
   }
 
   return (
     <div className={styles.messagesColumn}>
       CHAT
-      {messagesReceived.map((msg, i) => (
-        <div className={styles.message} key={i}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span className={styles.msgMeta}>{msg.username}</span>
-            <span className={styles.msgMeta}>
-              {formatDateFromTimestamp(msg.__createdtime__)}
-            </span>
+      <div className={styles.messagesContainer}>
+        {messagesReceived.map((msg, i) => (
+          <div className={styles.message} key={i}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span className={styles.msgMeta}>{msg.username}</span>
+              <span className={styles.msgMeta}>
+                {formatDateFromTimestamp(msg.__createdtime__)}
+              </span>
+            </div>
+            <p className={styles.msgText}>{msg.message}</p>
+            <br />
           </div>
-          <p className={styles.msgText}>{msg.message}</p>
-          <br />
-        </div>
-      ))}
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
     </div>
   );
 };
