@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const app = express();
 const http = require("http");
@@ -7,8 +8,9 @@ const { Server } = require("socket.io");
 app.use(cors());
 
 const server = http.createServer(app);
+const harperSaveMessage = require("./services/harper-save-message");
 
-//create io server and allow for CORS from localhost: 300 with get and post metthods
+//create io server and allow for CORS from localhost: 3000 with get and post metthods
 const io = new Server(server, {
   cors: { origin: "http://localhost:3000", methods: ["GET", "POST"] },
 });
@@ -57,6 +59,17 @@ io.on("connection", (socket) => {
     socket.to(room).emit("chatroom_users", chatRoomUsers);
     socket.emit("chatroom_users", chatRoomUsers);
   });
+
+  //Send message and save message history to db
+  socket.on('send_message', (data) => {
+    const { message, username, room, __createdtime__ } = data;
+    io.in(room).emit('receive_message', data); // Send to all users in room, including sender
+    harperSaveMessage(message, username, room, __createdtime__) // Save message in db
+      .then((response) => console.log(response))
+      .catch((err) => console.log(err));
+  });
+
+
 });
 
 //listen on port 4000
