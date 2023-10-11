@@ -24,11 +24,33 @@ const Messages = ({ socket }) => {
     };
   }, [socket]);
 
+  //last 100 messages sent in the chat room (fetched from db)
+  useEffect(() => {
+    socket.on("last_100_messages", (last100Messages) => {
+      console.log("last100Messages", JSON.parse(last100Messages));
+      last100Messages = JSON.parse(last100Messages);
+      last100Messages = sortMessageByDate(last100Messages);
+      setMessagesReceived((data) => [...last100Messages, ...data]);
+    });
+
+    return () => {
+      socket.off("last_100_messages");
+    };
+  }, [socket]);
+
+  //sort messages by date
+  const sortMessageByDate = (messages) => {
+    return messages.sort(
+      (a, b) => parseInt(a.__createdtime__) - parseInt(b.__createdtime__)
+    );
+  };
+
   //scroll to bottom of messages container
   useEffect(() => {
     messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
   }, [messagesReceived]);
 
+  //format date from timestamp
   function formatDateFromTimestamp(timestamp) {
     const date = new Date(parseInt(timestamp));
     return date.toLocaleString();
