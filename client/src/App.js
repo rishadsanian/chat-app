@@ -31,7 +31,7 @@ function App() {
           />
           <Route
             path="/chat"
-            element={<Chat username={username} room={room} socket={socket} />}
+            element={<Chat username={username} setUsername={setUsername} room={room} setRoom = {setRoom} socket={socket} />}
           />
         </Routes>
       </div>

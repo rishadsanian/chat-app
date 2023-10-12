@@ -11,6 +11,7 @@ const server = http.createServer(app);
 const leaveRoom = require("./utils/leave-room");
 const harperSaveMessage = require("./services/harper-save-message");
 const harperGetMessages = require("./services/harper-get-messages");
+// const { all } = require("axios");
 ///////////////////////////////////////////////////////////////////////////////
 //create io server and allow for CORS from localhost: 3000 with get and post metthods
 const io = new Server(server, {
@@ -90,6 +91,21 @@ io.on("connection", (socket) => {
       __createdtime__,
     });
     console.log(`User ${username}} left room: ${room}`);
+  });
+  
+  //When user disconnects
+  socket.on("disconnect", () => {
+    const __createdtime__ = Date.now();
+    console.log("User disconnected");
+    const user = allUsers.find((user) => user.id === socket.id);
+    if (user && user.username) {
+      allUsers = leaveRoom(socket.id, allUsers);
+      socket.to(chatRoom).emit("chatroom_users", allUsers);
+      socket.to(chatRoom).emit("receive_message", {
+        message: `${user.username} has disconnected.`,
+        __createdtime__,
+      });
+    }
   });
 });
 
